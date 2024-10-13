@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de 4 Relés</title>
+    <script>
+        // Función para cambiar el estado de un relé
+        function toggleRelay(relayNumber) {
+            const button = document.getElementById(`relay${relayNumber}`);
+            const action = button.innerText === "EstaEnc" ? "OFF" : "ON";
+
+            fetch(`http://192.168.0.46/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `relay=${relayNumber}&command=${action}`,
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Cambia el texto del botón de acuerdo al nuevo estado
+                button.innerText = data == "ON" ? "EstaEnc" : "EstaApag";
+                button.style.backgroundColor = data === "ON" ? "green" : "red";
+            })
+            .catch(error => {
+                document.getElementById(`response${relayNumber}`).innerText = `Error: ${error}`;
+            });
+        }
+
+        // Función para actualizar el estado de los relés
+        function updateRelayStates() {
+            fetch(`http://192.168.0.46/state`, {
+                method: 'GET'
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Actualiza el texto de los botones de acuerdo al estado de cada relé
+                for (let i = 1; i <= 4; i++) {
+                    const button = document.getElementById(`relay${i}`);
+                    button.innerText = data[`relay${i}`] == "ON" ? "EstaEnc" : "EstaApag";
+                    button.style.backgroundColor = data[`relay${i}`] === "ON" ? "green" : "red";
+                }
+            })
+            .catch(error => {
+                document.getElementById('response').innerText = `Error al actualizar: ${error}`;
+            });
+        }
+        window.onload = function() {
+            updateRelayStates();
+        }
+    </script>
+     <style>
+        /* Centrar contenido y cuadrícula para los botones */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+
+        .relay-control {
+            margin-bottom: 20px;
+        }
+
+        .btn-toggle {
+            padding: 20px 40px;
+            margin: 5px;
+            cursor: pointer;
+            color: white;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Botones para cada relé -->
+        <div class="relay-control">
+            <h3>Relé 1</h3>
+            <button id="relay1" class="btn-toggle" onclick="toggleRelay(1)"></button>
+            <p id="response1"></p>
+        </div>
+
+        <div class="relay-control">
+            <h3>Relé 2</h3>
+            <button id="relay2" class="btn-toggle" onclick="toggleRelay(2)"></button>
+            <p id="response2"></p>
+        </div>
+
+        <div class="relay-control">
+            <h3>Relé 3</h3>
+            <button id="relay3" class="btn-toggle" onclick="toggleRelay(3)"></button>
+            <p id="response3"></p>
+        </div>
+
+        <div class="relay-control">
+            <h3>Relé 4</h3>
+            <button id="relay4" class="btn-toggle" onclick="toggleRelay(4)"></button>
+            <p id="response4"></p>
+        </div>
+    </div>
+
+    <!-- Botón para actualizar el estado de los relés -->
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="updateRelayStates()">Actualizar</button>
+        <p id="response"></p> <!-- Para mostrar el estado general -->
+    </div>
+</body>
+</html>
